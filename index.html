@@ -5,110 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistente de Evaluaciones UDEP</title>
     <style>
-        /* DISEÑO GENERAL */
-        body {
-            background-color: #f0f2f5;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .contenedor-principal {
-            width: 100%;
-            max-width: 600px;
-        }
-
-        /* LAS DOS VENTANAS DE ARRIBA */
-        .fila-superior {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .ventana-input {
-            flex: 1;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-top: 4px solid #003057; /* Azul UDEP */
-        }
-
-        .ventana-input label {
-            display: block;
-            font-size: 11px;
-            font-weight: bold;
-            color: #003057;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }
-
-        .ventana-input input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-
-        /* BOTÓN DE BÚSQUEDA */
-        .btn-buscar {
-            width: 100%;
-            padding: 12px;
-            background-color: #003057;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 15px;
-            cursor: pointer;
-            margin-bottom: 15px;
-        }
-
-        .btn-buscar:hover {
-            background-color: #004a85;
-        }
-
-        /* VENTANA DE RESULTADOS GRANDE */
-        .ventana-resultados {
-            background: white;
-            min-height: 250px;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .ventana-resultados h2 {
-            margin-top: 0;
-            font-size: 18px;
-            color: #003057;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        /* ITEMS DE RESULTADO */
-        .resultado-caja {
-            background: #f9f9f9;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border-left: 4px solid #003057;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .contenedor-principal { width: 100%; max-width: 600px; }
+        .fila-superior { display: flex; gap: 15px; margin-bottom: 15px; }
+        .ventana-input { flex: 1; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-top: 4px solid #003057; }
+        .ventana-input label { display: block; font-size: 11px; font-weight: bold; color: #003057; margin-bottom: 5px; text-transform: uppercase; }
+        .ventana-input input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        .btn-buscar { width: 100%; padding: 12px; background-color: #003057; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 15px; }
+        .btn-buscar:hover { background-color: #004a85; }
+        .ventana-resultados { background: white; min-height: 250px; border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .ventana-resultados h2 { margin-top: 0; font-size: 18px; color: #003057; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        /* ESTILO DINÁMICO DE RESULTADOS */
+        .resultado-caja { background: #f9f9f9; padding: 12px; margin-bottom: 10px; border-radius: 5px; border-left: 4px solid #003057; font-size: 14px; line-height: 1.5; animation: fadeIn 0.3s ease-in; }
+        .eval-nombre { font-weight: bold; color: #003057; display: block; margin-bottom: 3px; }
         .badge-disponible { color: #28a745; font-weight: bold; }
         .badge-no { color: #dc3545; font-weight: bold; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="contenedor-principal">
-    
-    <!-- Ventanas Superiores -->
     <div class="fila-superior">
         <div class="ventana-input">
             <label>Sigla del Curso</label>
@@ -122,74 +41,70 @@
 
     <button class="btn-buscar" onclick="procesarConsulta()">CONSULTAR DISPONIBILIDAD</button>
 
-    <!-- Ventana de Resultados -->
     <div class="ventana-resultados">
-        <h2>Resultados de Búsqueda</h2>
+        <h2 id="tituloResultados">Resultados de Búsqueda</h2>
         <div id="areaResultados">
-            <p style="color: #999; text-align: center; margin-top: 50px;">
-                Ingrese los datos arriba para ver el estado de las evaluaciones.
-            </p>
+            <p style="color: #999; text-align: center; margin-top: 50px;">Ingrese los datos para verificar evaluaciones disponibles.</p>
         </div>
     </div>
-
 </div>
 
 <script>
     function procesarConsulta() {
-        // Capturar valores
         const curso = document.getElementById('txtCurso').value.trim().toUpperCase();
         const seccion = document.getElementById('txtSeccion').value.trim().toUpperCase();
         const area = document.getElementById('areaResultados');
 
-        // Validar que no estén vacíos
         if (curso === "" || seccion === "") {
-            alert("Por favor, complete ambos campos (Curso y Sección)");
+            alert("Por favor, completa ambos campos.");
             return;
         }
 
-        // Mostrar mensaje de carga
-        area.innerHTML = "<p>Buscando en el servidor de OneDrive...</p>";
+        area.innerHTML = "<p style='text-align:center;'>Buscando evaluaciones en el sistema...</p>";
 
-        // Simular la llegada de datos del Excel de Rosa María Masías
         setTimeout(() => {
-            // Aquí definimos la lógica que pediste
-            const datosExcel = {
-                existeP1: true,
-                fechaVence: "15.05.2026",
-                turno: "PM",
-                rec1: "DISPONIBLE",
-                rec2: "NO DISPONIBLE"
+            /* 
+               SIMULACIÓN DE DATOS DEL EXCEL
+               En el futuro, Power Automate enviará una lista como esta:
+            */
+            const evaluacionesEncontradas = [
+                { nombre: "PRÁCTICA 1", estado: "RECOJO", vence: "12.05", turno: "PM" },
+                { nombre: "PRÁCTICA 2", estado: "RECOJO", vence: "19.05", turno: "AM" },
+                { nombre: "EXAMEN PARCIAL", estado: "RECOJO", vence: "25.05", turno: "PM" },
+                // Si no hay P3, P4 o Final en el Excel, simplemente no se incluyen en esta lista
+            ];
+
+            const reclamos = {
+                r1: "DISPONIBLE",
+                r2: "NO DISPONIBLE"
             };
 
-            // Construir el HTML de los resultados
             let htmlFinal = "";
 
-            // 1. Lógica de la Práctica
-            if(datosExcel.existeP1) {
+            // 1. Mostrar todas las evaluaciones que existan (PC1, PC2, Parcial, etc.)
+            evaluacionesEncontradas.forEach(ev => {
                 htmlFinal += `
                     <div class="resultado-caja">
-                        <strong>Práctica 1:</strong> RECOJO / VENCE ${datosExcel.fechaVence} / TURNO ${datosExcel.turno}
+                        <span class="eval-nombre">${ev.nombre}:</span>
+                        ${ev.estado} / VENCE ${ev.vence} / TURNO ${ev.turno}
                     </div>
                 `;
-            }
+            });
 
-            // 2. Lógica del Primer Reclamo
+            // 2. Mostrar siempre el estado de los reclamos al final
             htmlFinal += `
-                <div class="resultado-caja" style="border-left-color: ${datosExcel.rec1 === 'DISPONIBLE' ? '#28a745' : '#dc3545'}">
-                    <strong>Primer reclamo:</strong> 
-                    <span class="${datosExcel.rec1 === 'DISPONIBLE' ? 'badge-disponible' : 'badge-no'}">${datosExcel.rec1}</span>
+                <div class="resultado-caja" style="border-left-color: ${reclamos.r1 === 'DISPONIBLE' ? '#28a745' : '#dc3545'}">
+                    <span class="eval-nombre">PRIMER RECLAMO:</span>
+                    <span class="${reclamos.r1 === 'DISPONIBLE' ? 'badge-disponible' : 'badge-no'}">${reclamos.r1}</span>
                 </div>
-            `;
-
-            // 3. Lógica del Segundo Reclamo
-            htmlFinal += `
-                <div class="resultado-caja" style="border-left-color: ${datosExcel.rec2 === 'DISPONIBLE' ? '#28a745' : '#dc3545'}">
-                    <strong>Segundo reclamo:</strong> 
-                    <span class="${datosExcel.rec2 === 'DISPONIBLE' ? 'badge-disponible' : 'badge-no'}">${datosExcel.rec2}</span>
+                <div class="resultado-caja" style="border-left-color: ${reclamos.r2 === 'DISPONIBLE' ? '#28a745' : '#dc3545'}">
+                    <span class="eval-nombre">SEGUNDO RECLAMO:</span>
+                    <span class="${reclamos.r2 === 'DISPONIBLE' ? 'badge-disponible' : 'badge-no'}">${reclamos.r2}</span>
                 </div>
             `;
 
             area.innerHTML = htmlFinal;
+            document.getElementById('tituloResultados').innerText = "Resultados: " + curso + " " + seccion;
 
         }, 700);
     }
