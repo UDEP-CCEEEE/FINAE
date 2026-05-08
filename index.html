@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Evaluaciones UDEP</title>
+    <style>
+        /* Estilos base para evitar que se vea en blanco */
+        body {
+            background-color: #003057; /* Azul UDEP de fondo para notar que cargó */
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding-top: 50px;
+        }
+
+        .main-container {
+            width: 90%;
+            max-width: 600px;
+        }
+
+        /* Ventanas superiores (Sigla y Sección) */
+        .top-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .input-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .input-box label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #003057;
+            margin-bottom: 8px;
+        }
+
+        .input-box input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        /* Ventana de resultados grande */
+        .results-window {
+            background: #ffffff;
+            min-height: 300px;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .results-window h2 {
+            color: #003057;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #f1b434; /* Dorado/Amarillo para que resalte */
+            color: #003057;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #d49d2a;
+        }
+
+        .item-resultado {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            background: #fafafa;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .disponible { color: #28a745; font-weight: bold; }
+        .no-disponible { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <!-- Fila Superior -->
+    <div class="top-grid">
+        <div class="input-box">
+            <label>SIGLA DEL CURSO</label>
+            <input type="text" id="curso" placeholder="Ej: A1MT1">
+        </div>
+        <div class="input-box">
+            <label>SECCIÓN</label>
+            <input type="text" id="seccion" placeholder="Ej: C">
+        </div>
+    </div>
+
+    <button onclick="testBusqueda()">BUSCAR EVALUACIONES</button>
+
+    <!-- Ventana Grande de Resultados -->
+    <div class="results-window" id="pantalla">
+        <h2>Resultados</h2>
+        <div id="output">
+            <p style="color: #666; text-align: center; margin-top: 80px;">
+                La información aparecerá aquí al realizar la búsqueda.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function testBusqueda() {
+        const c = document.getElementById('curso').value.toUpperCase();
+        const s = document.getElementById('seccion').value.toUpperCase();
+        const out = document.getElementById('output');
+
+        if(!c || !s) {
+            alert("Por favor ingresa curso y sección.");
+            return;
+        }
+
+        out.innerHTML = "<p>Buscando disponibilidad para " + c + " - " + s + "...</p>";
+
+        // Simulación de los datos del Excel
+        setTimeout(() => {
+            out.innerHTML = `
+                <div class="item-resultado">
+                    <strong>Práctica 1:</strong> RECOJO / VENCE 20.05.2026 / TURNO AM
+                </div>
+                <div class="item-resultado">
+                    <strong>Primer reclamo:</strong> <span class="disponible">DISPONIBLE</span>
+                </div>
+                <div class="item-resultado">
+                    <strong>Segundo reclamo:</strong> <span class="no-disponible">NO DISPONIBLE</span>
+                </div>
+            `;
+        }, 800);
+    }
+</script>
+
+</body>
+</html>
