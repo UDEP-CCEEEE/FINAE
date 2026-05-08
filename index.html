@@ -11,18 +11,17 @@
         .ventana-input { flex: 1; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-top: 4px solid #003057; }
         .ventana-input label { display: block; font-size: 11px; font-weight: bold; color: #003057; margin-bottom: 5px; text-transform: uppercase; }
         .ventana-input input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
-        .btn-buscar { width: 100%; padding: 12px; background-color: #003057; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 15px; }
-        .btn-buscar:hover { background-color: #004a85; }
+        .btn-buscar { width: 100%; padding: 12px; background-color: #003057; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 15px; transition: 0.3s; }
+        .btn-buscar:hover { background-color: #004a85; transform: translateY(-1px); }
         .ventana-resultados { background: white; min-height: 250px; border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .ventana-resultados h2 { margin-top: 0; font-size: 18px; color: #003057; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         
-        /* ESTILO DINÁMICO DE RESULTADOS */
-        .resultado-caja { background: #f9f9f9; padding: 12px; margin-bottom: 10px; border-radius: 5px; border-left: 4px solid #003057; font-size: 14px; line-height: 1.5; animation: fadeIn 0.3s ease-in; }
+        .resultado-caja { background: #f9f9f9; padding: 12px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #ccc; font-size: 14px; line-height: 1.5; }
         .eval-nombre { font-weight: bold; color: #003057; display: block; margin-bottom: 3px; }
-        .badge-disponible { color: #28a745; font-weight: bold; }
-        .badge-no { color: #dc3545; font-weight: bold; }
         
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .status-disponible { color: #28a745; font-weight: bold; } 
+        .status-fuera { color: #e67e22; font-weight: bold; }       
+        .status-no { color: #dc3545; font-weight: bold; }          
     </style>
 </head>
 <body>
@@ -44,7 +43,7 @@
     <div class="ventana-resultados">
         <h2 id="tituloResultados">Resultados de Búsqueda</h2>
         <div id="areaResultados">
-            <p style="color: #999; text-align: center; margin-top: 50px;">Ingrese los datos para verificar evaluaciones disponibles.</p>
+            <p style="color: #999; text-align: center; margin-top: 50px;">Ingrese los datos para verificar el estado en ventanilla.</p>
         </div>
     </div>
 </div>
@@ -56,55 +55,74 @@
         const area = document.getElementById('areaResultados');
 
         if (curso === "" || seccion === "") {
-            alert("Por favor, completa ambos campos.");
+            alert("Por favor, completa la sigla y sección.");
             return;
         }
 
-        area.innerHTML = "<p style='text-align:center;'>Buscando evaluaciones en el sistema...</p>";
+        area.innerHTML = "<p style='text-align:center;'>Comparando fechas de recojo...</p>";
 
         setTimeout(() => {
-            /* 
-               SIMULACIÓN DE DATOS DEL EXCEL
-               En el futuro, Power Automate enviará una lista como esta:
-            */
-            const evaluacionesEncontradas = [
-                { nombre: "PRÁCTICA 1", estado: "RECOJO", vence: "12.05", turno: "PM" },
-                { nombre: "PRÁCTICA 2", estado: "RECOJO", vence: "19.05", turno: "AM" },
-                { nombre: "EXAMEN PARCIAL", estado: "RECOJO", vence: "25.05", turno: "PM" },
-                // Si no hay P3, P4 o Final en el Excel, simplemente no se incluyen en esta lista
+            // Fecha de hoy para comparar
+            const hoy = new Date();
+            
+            // Simulación de datos que vendrían del Excel
+            // El formato de fecha aquí es Año, Mes (0-11), Día
+            const evaluaciones = [
+                { nombre: "PRÁCTICA 1", limite: new Date(2026, 4, 1), turno: "AM" }, // 1 de Mayo (Ya pasó)
+                { nombre: "PRÁCTICA 2", limite: new Date(2026, 4, 15), turno: "PM" }, // 15 de Mayo (Futuro)
+                { nombre: "EXAMEN PARCIAL", limite: new Date(2026, 4, 10), turno: "PM" }, // 10 de Mayo
+                { nombre: "PRÁCTICA 3", limite: null, turno: "" } // Aún no llega
             ];
 
-            const reclamos = {
-                r1: "DISPONIBLE",
-                r2: "NO DISPONIBLE"
-            };
+            const reclamos = { r1: "DISPONIBLE", r2: "NO DISPONIBLE" };
 
             let htmlFinal = "";
 
-            // 1. Mostrar todas las evaluaciones que existan (PC1, PC2, Parcial, etc.)
-            evaluacionesEncontradas.forEach(ev => {
+            evaluaciones.forEach(ev => {
+                let textoEstado = "";
+                let claseEstado = "";
+                let colorBorde = "";
+                let detalleInfo = "";
+
+                if (!ev.limite) {
+                    textoEstado = "NO DISPONIBLE";
+                    claseEstado = "status-no";
+                    colorBorde = "#dc3545";
+                } else if (hoy > ev.limite) {
+                    textoEstado = "FUERA DE VENTANILLA";
+                    claseEstado = "status-fuera";
+                    colorBorde = "#e67e22";
+                } else {
+                    textoEstado = "DISPONIBLE";
+                    claseEstado = "status-disponible";
+                    colorBorde = "#28a745";
+                    // Formatear fecha para mostrar
+                    const fCorta = ev.limite.getDate() + "/" + (ev.limite.getMonth() + 1);
+                    detalleInfo = ` / VENCE EL ${fCorta} / TURNO ${ev.turno}`;
+                }
+
                 htmlFinal += `
-                    <div class="resultado-caja">
+                    <div class="resultado-caja" style="border-left-color: ${colorBorde}">
                         <span class="eval-nombre">${ev.nombre}:</span>
-                        ${ev.estado} / VENCE ${ev.vence} / TURNO ${ev.turno}
+                        <span class="${claseEstado}">${textoEstado}</span>${detalleInfo}
                     </div>
                 `;
             });
 
-            // 2. Mostrar siempre el estado de los reclamos al final
+            // Reclamos
             htmlFinal += `
                 <div class="resultado-caja" style="border-left-color: ${reclamos.r1 === 'DISPONIBLE' ? '#28a745' : '#dc3545'}">
                     <span class="eval-nombre">PRIMER RECLAMO:</span>
-                    <span class="${reclamos.r1 === 'DISPONIBLE' ? 'badge-disponible' : 'badge-no'}">${reclamos.r1}</span>
+                    <span class="${reclamos.r1 === 'DISPONIBLE' ? 'status-disponible' : 'status-no'}">${reclamos.r1}</span>
                 </div>
                 <div class="resultado-caja" style="border-left-color: ${reclamos.r2 === 'DISPONIBLE' ? '#28a745' : '#dc3545'}">
                     <span class="eval-nombre">SEGUNDO RECLAMO:</span>
-                    <span class="${reclamos.r2 === 'DISPONIBLE' ? 'badge-disponible' : 'badge-no'}">${reclamos.r2}</span>
+                    <span class="${reclamos.r2 === 'DISPONIBLE' ? 'status-disponible' : 'status-no'}">${reclamos.r2}</span>
                 </div>
             `;
 
             area.innerHTML = htmlFinal;
-            document.getElementById('tituloResultados').innerText = "Resultados: " + curso + " " + seccion;
+            document.getElementById('tituloResultados').innerText = "Estado: " + curso + " " + seccion;
 
         }, 700);
     }
