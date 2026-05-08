@@ -3,85 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de Evaluaciones UDEP</title>
+    <title>Buscador de Evaluaciones UDEP</title>
     <style>
+        /* Estilos base para evitar que se vea en blanco */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
+            background-color: #003057; /* Azul UDEP de fondo para notar que cargó */
+            font-family: 'Segoe UI', Arial, sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding-top: 50px;
         }
 
-        .contenedor {
-            width: 100%;
+        .main-container {
+            width: 90%;
             max-width: 600px;
         }
 
-        /* Las dos ventanas pequeñas de arriba */
-        .fila-superior {
-            display: flex;
+        /* Ventanas superiores (Sigla y Sección) */
+        .top-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 15px;
             margin-bottom: 15px;
         }
 
-        .ventana-pequena {
-            flex: 1;
+        .input-box {
             background: white;
             padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            border-top: 5px solid #003057; /* Azul UDEP */
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
-        /* Ventana de resultados grande abajo */
-        .ventana-grande {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            min-height: 200px;
-        }
-
-        label {
+        .input-box label {
             display: block;
-            font-weight: bold;
             font-size: 12px;
+            font-weight: bold;
             color: #003057;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
-        input {
+        .input-box input {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
-            border-radius: 5px;
+            border-radius: 4px;
             box-sizing: border-box;
             font-size: 16px;
             text-transform: uppercase;
         }
 
+        /* Ventana de resultados grande */
+        .results-window {
+            background: #ffffff;
+            min-height: 300px;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .results-window h2 {
+            color: #003057;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
         button {
             width: 100%;
-            padding: 12px;
-            background-color: #003057;
-            color: white;
+            padding: 15px;
+            background: #f1b434; /* Dorado/Amarillo para que resalte */
+            color: #003057;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             font-weight: bold;
+            font-size: 16px;
             cursor: pointer;
             margin-bottom: 15px;
+            transition: 0.3s;
         }
 
         button:hover {
-            background-color: #004a85;
+            background: #d49d2a;
         }
 
-        .resultado-item {
-            padding: 12px;
+        .item-resultado {
+            padding: 15px;
             border-bottom: 1px solid #eee;
-            line-height: 1.6;
+            background: #fafafa;
+            margin-bottom: 10px;
+            border-radius: 4px;
         }
 
         .disponible { color: #28a745; font-weight: bold; }
@@ -90,64 +103,59 @@
 </head>
 <body>
 
-<div class="contenedor">
-    <div class="fila-superior">
-        <div class="ventana-pequena">
+<div class="main-container">
+    <!-- Fila Superior -->
+    <div class="top-grid">
+        <div class="input-box">
             <label>SIGLA DEL CURSO</label>
             <input type="text" id="curso" placeholder="Ej: A1MT1">
         </div>
-        <div class="ventana-pequena">
+        <div class="input-box">
             <label>SECCIÓN</label>
             <input type="text" id="seccion" placeholder="Ej: C">
         </div>
     </div>
 
-    <button onclick="buscarEnExcel()">CONSULTAR ESTADO</button>
+    <button onclick="testBusqueda()">BUSCAR EVALUACIONES</button>
 
-    <div class="ventana-grande" id="pantallaResultados">
-        <h3 style="margin-top: 0; color: #003057;">Resultados:</h3>
-        <div id="listaResultados">
-            <p style="color: #888;">Ingresa los datos arriba para verificar disponibilidad.</p>
+    <!-- Ventana Grande de Resultados -->
+    <div class="results-window" id="pantalla">
+        <h2>Resultados</h2>
+        <div id="output">
+            <p style="color: #666; text-align: center; margin-top: 80px;">
+                La información aparecerá aquí al realizar la búsqueda.
+            </p>
         </div>
     </div>
 </div>
 
 <script>
-    function buscarEnExcel() {
-        const sigla = document.getElementById('curso').value.trim().toUpperCase();
-        const seccion = document.getElementById('seccion').value.trim().toUpperCase();
-        const lista = document.getElementById('listaResultados');
+    function testBusqueda() {
+        const c = document.getElementById('curso').value.toUpperCase();
+        const s = document.getElementById('seccion').value.toUpperCase();
+        const out = document.getElementById('output');
 
-        if (sigla === "" || seccion === "") {
-            alert("Por favor, completa la sigla y la sección.");
+        if(!c || !s) {
+            alert("Por favor ingresa curso y sección.");
             return;
         }
 
-        lista.innerHTML = "<p>Buscando en OneDrive...</p>";
+        out.innerHTML = "<p>Buscando disponibilidad para " + c + " - " + s + "...</p>";
 
-        // --- LÓGICA DE SIMULACIÓN (Esto se reemplaza con la conexión real) ---
+        // Simulación de los datos del Excel
         setTimeout(() => {
-            // Aquí definimos los datos de prueba
-            const datos = {
-                practica: "RECOJO / VENCE 12.05.2026 / TURNO PM",
-                reclamo1: "DISPONIBLE",
-                reclamo2: "NO DISPONIBLE"
-            };
-
-            lista.innerHTML = `
-                <div class="resultado-item">
-                    <strong>Práctica 1:</strong> ${datos.practica}
+            out.innerHTML = `
+                <div class="item-resultado">
+                    <strong>Práctica 1:</strong> RECOJO / VENCE 20.05.2026 / TURNO AM
                 </div>
-                <div class="resultado-item">
-                    <strong>Primer reclamo:</strong> 
-                    <span class="${datos.reclamo1 === 'DISPONIBLE' ? 'disponible' : 'no-disponible'}">${datos.reclamo1}</span>
+                <div class="item-resultado">
+                    <strong>Primer reclamo:</strong> <span class="disponible">DISPONIBLE</span>
                 </div>
-                <div class="resultado-item">
-                    <strong>Segundo reclamo:</strong> 
-                    <span class="${datos.reclamo2 === 'DISPONIBLE' ? 'disponible' : 'no-disponible'}">${datos.reclamo2}</span>
+                <div class="item-resultado">
+                    <strong>Segundo reclamo:</strong> <span class="no-disponible">NO DISPONIBLE</span>
                 </div>
             `;
-        }, 600);
+        }, 800);
     }
 </script>
 
