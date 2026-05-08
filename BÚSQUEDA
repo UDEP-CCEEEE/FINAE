@@ -2,208 +2,83 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscador de Evaluaciones - UDEP</title>
+    <title>Buscador UDEP</title>
     <style>
-        :root {
-            --udep-blue: #003057;
-            --light-bg: #f4f7f9;
-            --success: #28a745;
-            --danger: #dc3545;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--light-bg);
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-            margin: 0;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 700px;
-        }
-
-        /* Ventanas Superiores */
-        .top-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            border-top: 4px solid var(--udep-blue);
-        }
-
-        label {
-            display: block;
-            font-weight: bold;
-            color: var(--udep-blue);
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 1rem;
-            text-transform: uppercase;
-        }
-
-        /* Ventana de Búsqueda Grande */
-        .results-card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            min-height: 250px;
-        }
-
-        .btn-buscar {
-            width: 100%;
-            background: var(--udep-blue);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 20px;
-            transition: background 0.3s;
-        }
-
-        .btn-buscar:hover {
-            background: #004a85;
-        }
-
-        /* Estilo de los resultados internos */
-        .eval-item {
-            padding: 15px;
-            margin-bottom: 10px;
-            border-left: 5px solid #ccc;
-            background: #f9f9f9;
-        }
-
-        .disponible { color: var(--success); font-weight: bold; }
-        .no-disponible { color: var(--danger); font-weight: bold; }
+        body { font-family: sans-serif; background-color: #e5e5e5; padding: 20px; }
+        .contenedor { max-width: 500px; margin: auto; }
         
-        .info-recojo {
-            border-left-color: var(--udep-blue);
+        /* Las dos ventanas de arriba */
+        .fila-superior { display: flex; gap: 10px; margin-bottom: 10px; }
+        .ventana-pequena { 
+            flex: 1; background: white; padding: 15px; 
+            border-radius: 8px; border-top: 4px solid #003057; 
+        }
+        
+        /* Ventana de búsqueda grande abajo */
+        .ventana-grande { 
+            background: white; padding: 20px; border-radius: 8px; 
+            min-height: 200px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
         }
 
-        h2 {
-            color: var(--udep-blue);
-            font-size: 1.2rem;
-            margin-top: 0;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
+        input { width: 100%; padding: 8px; box-sizing: border-box; margin-top: 5px; }
+        button { 
+            width: 100%; padding: 10px; background: #003057; color: white; 
+            border: none; border-radius: 4px; margin: 10px 0; cursor: pointer;
         }
+        .item { padding: 10px; border-bottom: 1px solid #eee; }
+        .disponible { color: green; font-weight: bold; }
+        .no { color: red; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- Ventanas de entrada superiores -->
-    <div class="top-row">
-        <div class="card">
-            <label>SIGLA DEL CURSO</label>
-            <input type="text" id="inputCurso" placeholder="Ej: A1MT1">
+<div class="contenedor">
+    <div class="fila-superior">
+        <div class="ventana-pequena">
+            <label>SIGLA</label>
+            <input type="text" id="curso" placeholder="A1MT1">
         </div>
-        <div class="card">
+        <div class="ventana-pequena">
             <label>SECCIÓN</label>
-            <input type="text" id="inputSeccion" placeholder="Ej: C">
+            <input type="text" id="seccion" placeholder="C">
         </div>
     </div>
 
-    <button class="btn-buscar" onclick="buscarDatos()">CONSULTAR DISPONIBILIDAD</button>
+    <button onclick="ejecutarBusqueda()">BUSCAR</button>
 
-    <!-- Ventana de búsqueda grande abajo -->
-    <div class="results-card" id="pantallaResultados">
-        <h2>Información de Entrega</h2>
-        <div id="mensajeInicial" style="color: #666; text-align: center; margin-top: 50px;">
-            Ingresa la sigla y sección para verificar si tus evaluaciones están listas.
-        </div>
-        <div id="resultadoContenido" style="display: none;">
-            <!-- Aquí se inyectan los datos -->
-        </div>
+    <div class="ventana-grande" id="resultados">
+        <h3 style="margin-top:0">Resultados:</h3>
+        <div id="lista">Los resultados aparecerán aquí.</div>
     </div>
 </div>
 
 <script>
-    function buscarDatos() {
-        const curso = document.getElementById('inputCurso').value.trim().toUpperCase();
-        const seccion = document.getElementById('inputSeccion').value.trim().toUpperCase();
-        const contenido = document.getElementById('resultadoContenido');
-        const mensaje = document.getElementById('mensajeInicial');
+    function ejecutarBusqueda() {
+        const c = document.getElementById('curso').value.toUpperCase();
+        const s = document.getElementById('seccion').value.toUpperCase();
+        const lista = document.getElementById('lista');
 
-        if (!curso || !seccion) {
-            alert("Por favor, completa ambos campos.");
+        if(c === "" || s === "") {
+            alert("Por favor llena ambos cuadros");
             return;
         }
 
-        // OCULTAR MENSAJE INICIAL Y MOSTRAR CONTENIDO
-        mensaje.style.display = 'none';
-        contenido.style.display = 'block';
-        contenido.innerHTML = "<p>Buscando en el archivo de OneDrive...</p>";
+        lista.innerHTML = "Buscando datos de " + c + " sección " + s + "...";
 
-        /* 
-           IMPORTANTE: 
-           Como GitHub no puede leer directamente tu Excel privado de UDEP sin una API,
-           esta función simula la lectura de las columnas de tu Excel.
-        */
-
-        // Simulación de los datos que vendrían de tu Excel en OneDrive
-        // En una fase avanzada, aquí usaríamos 'fetch' hacia Power Automate.
+        // Aquí simulamos la respuesta del Excel
         setTimeout(() => {
-            const mockData = {
-                sigla: curso,
-                seccion: seccion,
-                p1_existe: true, // Esto depende de si hay datos en la fila
-                fecha_vence: "15/05/2026",
-                turno: "PM",
-                reclamo1_status: "DISPONIBLE", // Cambiar a "NO DISPONIBLE" según Excel
-                reclamo2_status: "NO DISPONIBLE"
-            };
-
-            renderizarResultados(mockData);
-        }, 800);
-    }
-
-    function renderizarResultados(data) {
-        const contenido = document.getElementById('resultadoContenido');
-        
-        contenido.innerHTML = `
-            <div class="eval-item info-recojo">
-                <strong>Práctica 1:</strong> 
-                ${data.p1_existe 
-                    ? `RECOJO / VENCE ${data.fecha_vence} / TURNO ${data.turno}` 
-                    : `<span class="no-disponible">NO DISPONIBLE PARA RECOJO</span>`}
-            </div>
-
-            <div class="eval-item">
-                <strong>Primer reclamo:</strong> 
-                <span class="${data.reclamo1_status === 'DISPONIBLE' ? 'disponible' : 'no-disponible'}">
-                    ${data.reclamo1_status}
-                </span>
-            </div>
-
-            <div class="eval-item">
-                <strong>Segundo reclamo:</strong> 
-                <span class="${data.reclamo2_status === 'DISPONIBLE' ? 'disponible' : 'no-disponible'}">
-                    ${data.reclamo2_status}
-                </span>
-            </div>
-        `;
+            lista.innerHTML = `
+                <div class="item">
+                    <strong>Práctica 1:</strong> RECOJO / VENCE 15/05 / TURNO AM
+                </div>
+                <div class="item">
+                    <strong>Primer reclamo:</strong> <span class="disponible">DISPONIBLE</span>
+                </div>
+                <div class="item">
+                    <strong>Segundo reclamo:</strong> <span class="no">NO DISPONIBLE</span>
+                </div>
+            `;
+        }, 500);
     }
 </script>
 
