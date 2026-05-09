@@ -6,7 +6,7 @@
     <title>Asistente de Ventanilla UDEP</title>
     <style>
         :root { --udep-blue: #003057; --udep-gold: #f1b434; }
-        body { background-color: #f4f7f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        body { background-color: #f4f7f9; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .contenedor { width: 100%; max-width: 550px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; border-top: 6px solid var(--udep-blue); }
         .fila-inputs { display: flex; gap: 15px; }
@@ -15,13 +15,13 @@
         input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; text-transform: uppercase; }
         button { width: 100%; padding: 15px; background: var(--udep-gold); color: var(--udep-blue); border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; margin-top: 15px; }
         button:hover { background: #d9a12e; }
-        .resultado-item { background: #fdfdfd; padding: 15px; border-radius: 8px; border-left: 5px solid #ccc; margin-bottom: 12px; border: 1px solid #eee; border-left-width: 6px; }
+        .resultado-item { background: #fdfdfd; padding: 15px; border-radius: 8px; border-left: 6px solid #ccc; margin-bottom: 12px; border: 1px solid #eee; }
         .nombre-ev { font-weight: bold; color: var(--udep-blue); display: block; margin-bottom: 4px; }
-        .status-badge { font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+        .status-badge { font-weight: bold; font-size: 13px; }
         .disponible { color: #27ae60; }
         .fuera { color: #e67e22; }
         .no-disp { color: #c0392b; }
-        .error-anuncio { background: #fee; color: #c33; padding: 20px; border-radius: 8px; text-align: center; font-weight: bold; border: 1px dashed #c33; }
+        .error-anuncio { background: #fee; color: #c33; padding: 20px; border-radius: 8px; text-align: center; font-weight: bold; border: 2px dashed #c33; }
     </style>
 </head>
 <body>
@@ -44,7 +44,7 @@
     <div class="card" id="panelResultados">
         <h3 style="margin-top:0; color: var(--udep-blue); font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Estado de Ventanilla</h3>
         <div id="listaResultados">
-            <p style="text-align:center; color:#888;">Ingrese los datos para verificar lo publicado.</p>
+            <p style="text-align:center; color:#888;">Ingrese los datos del curso.</p>
         </div>
     </div>
 </div>
@@ -56,88 +56,81 @@
         const lista = document.getElementById('listaResultados');
 
         if (!cursoIn || !seccionIn) {
-            alert("Por favor, ingresa Sigla y Sección");
+            alert("Por favor, completa ambos campos.");
             return;
         }
 
-        lista.innerHTML = "<p style='text-align:center;'>Buscando en repositorio local...</p>";
+        lista.innerHTML = "<p style='text-align:center;'>Buscando información...</p>";
 
         try {
-            // Buscamos el archivo datos.json en la misma carpeta de GitHub
+            // Intentamos cargar el archivo. 
+            // Si el nombre en GitHub es exactamente datos.json, usa este:
             const response = await fetch('datos.json');
+            
+            if (!response.ok) throw new Error("Archivo no encontrado");
+
             const data = await response.json();
 
-            // Filtramos por curso y sección
-            const cursoEncontrado = data.find(c => c.sigla === cursoIn && c.seccion === seccionIn);
+            const encontrado = data.find(c => 
+                c.sigla.toUpperCase() === cursoIn && 
+                c.seccion.toUpperCase() === seccionIn
+            );
 
-            if (!cursoEncontrado) {
+            if (!encontrado) {
                 lista.innerHTML = "<div class='error-anuncio'>CURSO O ERROR MAL ESCRITO</div>";
                 return;
             }
 
-            mostrarDatos(cursoEncontrado);
+            renderizar(encontrado);
 
         } catch (error) {
-            console.error(error);
-            lista.innerHTML = "<div class='error-anuncio'>ERROR: NO SE ENCONTRÓ EL ARCHIVO datos.json</div>";
+            lista.innerHTML = `
+                <div class='error-anuncio'>
+                    ERROR: No se pudo leer el archivo de datos.<br>
+                    <small style="font-weight:normal;">Asegúrate de que el archivo se llame 'datos.json' y no 'datos.json.xlsx'</small>
+                </div>`;
         }
     }
 
-    function mostrarDatos(datos) {
+    function renderizar(datos) {
         const hoy = new Date();
         let html = "";
 
-        // 1. Renderizar Evaluaciones Publicadas
+        // Evaluaciones
         datos.evaluaciones.forEach(ev => {
             const fLimite = new Date(ev.limite);
-            // Ajuste de horas para evitar desfases de zona horaria
             fLimite.setHours(23, 59, 59);
 
-            let statusTxt = "";
-            let statusClase = "";
-            let colorBorde = "";
-            let detalles = "";
-
-            if (hoy > fLimite) {
-                statusTxt = "FUERA DE VENTANILLA";
-                statusClase = "fuera";
-                colorBorde = "#e67e22";
-            } else {
-                statusTxt = "DISPONIBLE";
-                statusClase = "disponible";
-                colorBorde = "#27ae60";
-                const fechaLegible = fLimite.getDate() + "/" + (fLimite.getMonth() + 1);
-                detalles = ` / VENCE EL ${fechaLegible} / TURNO ${ev.turno}`;
-            }
+            let status = hoy > fLimite ? "FUERA DE VENTANILLA" : "DISPONIBLE";
+            let clase = hoy > fLimite ? "fuera" : "disponible";
+            let color = hoy > fLimite ? "#e67e22" : "#27ae60";
+            let fechaTxt = `${fLimite.getDate()}/${fLimite.getMonth() + 1}`;
 
             html += `
-                <div class="resultado-item" style="border-left-color: ${colorBorde}">
+                <div class="resultado-item" style="border-left-color: ${color}">
                     <span class="nombre-ev">${ev.nombre}</span>
-                    <span class="status-badge ${statusClase}">${statusTxt}</span>${detalles}
+                    <span class="status-badge ${clase}">${status}</span> 
+                    ${status === "DISPONIBLE" ? `/ VENCE EL ${fechaTxt} / TURNO ${ev.turno}` : ""}
                 </div>
             `;
         });
 
-        // 2. Separador visual
-        html += "<div style='margin: 20px 0; border-top: 2px dashed #eee;'></div>";
-
-        // 3. Renderizar Reclamos
-        datos.reclamos.forEach(rec => {
-            let colorBordeRec = rec.estado === "DISPONIBLE" ? "#27ae60" : "#c0392b";
-            let venceRec = "";
+        // Separador si hay reclamos
+        if(datos.reclamos && datos.reclamos.length > 0) {
+            html += "<div style='margin: 15px 0; border-top: 1px solid #eee;'></div>";
             
-            if (rec.estado === "DISPONIBLE" && rec.vence) {
-                const fVence = new Date(rec.vence);
-                venceRec = ` / HASTA EL ${fVence.getDate()}/${fVence.getMonth() + 1}`;
-            }
-
-            html += `
-                <div class="resultado-item" style="border-left-color: ${colorBordeRec}">
-                    <span class="nombre-ev">${rec.nombre}</span>
-                    <span class="status-badge ${rec.estado === 'DISPONIBLE' ? 'disponible' : 'no-disp'}">${rec.estado}</span>${venceRec}
-                </div>
-            `;
-        });
+            datos.reclamos.forEach(rec => {
+                const esDisp = rec.estado.toUpperCase() === "DISPONIBLE";
+                const colorRec = esDisp ? "#27ae60" : "#c0392b";
+                
+                html += `
+                    <div class="resultado-item" style="border-left-color: ${colorRec}">
+                        <span class="nombre-ev">${rec.nombre}</span>
+                        <span class="status-badge ${esDisp ? 'disponible' : 'no-disp'}">${rec.estado}</span>
+                    </div>
+                `;
+            });
+        }
 
         document.getElementById('listaResultados').innerHTML = html;
     }
